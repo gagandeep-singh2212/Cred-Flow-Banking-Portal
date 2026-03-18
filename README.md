@@ -84,5 +84,4 @@ This project simulates a complete **digital banking experience**:
 
 ### 🗄️ Database
 - MySQL
-
 ---
