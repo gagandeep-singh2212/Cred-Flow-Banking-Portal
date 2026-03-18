@@ -1,0 +1,141 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>CredFlow - Dashboard</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6fb;
+            margin: 0;
+            padding: 20px;
+        }
+
+        header {
+            background: #4a63e7;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        nav a {
+            color: white;
+            margin-right: 15px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        h1, h2, h3 {
+            margin-top: 0;
+        }
+
+        p {
+            color: #555;
+        }
+
+        .actions a {
+            display: inline-block;
+            margin: 10px 10px 0 0;
+            padding: 8px 12px;
+            background: #4a63e7;
+            color: white;
+            border-radius: 6px;
+            text-decoration: none;
+        }
+
+        .actions a:hover {
+            background: #3b50c9;
+        }
+
+        button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background: #e74c3c;
+            color: white;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #777;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- Header -->
+<header>
+    <h2>🏦 CredFlow</h2>
+    <nav>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/accounts">Accounts</a>
+        <a href="/transactions">Transactions</a>
+    </nav>
+
+    <form action="/logout" method="get" style="margin-top:10px;">
+        <button type="submit">Logout</button>
+    </form>
+</header>
+
+<div class="container">
+
+    <!-- Welcome -->
+    <div class="card">
+        <h2>Welcome Back!</h2>
+        <p>Manage your finances easily</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="card">
+        <h3>Quick Info</h3>
+        <p>💰 Total Balance - View in Accounts</p>
+        <p>📊 Recent Activity - View in Transactions</p>
+        <p>🔒 Secure Banking - Protected</p>
+    </div>
+
+    <!-- Actions -->
+    <div class="card actions">
+        <h3>Quick Actions</h3>
+        <a href="/accounts">View Accounts</a>
+        <a href="/transactions">View Transactions</a>
+        <a href="/accounts">Transfer Money</a>
+    </div>
+
+    <!-- Features -->
+    <div class="card">
+        <h3>Why Choose CredFlow?</h3>
+        <p>🛡️ Safe Banking</p>
+        <p>⚡ Fast And Safe Transactions</p>
+    </div>
+
+</div>
+
+</body>
+</html>

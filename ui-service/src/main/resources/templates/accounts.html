@@ -1,0 +1,347 @@
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>CredFlow - My Accounts</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6fb;
+            margin: 0;
+            padding: 20px;
+        }
+
+        header {
+            background: #4a63e7;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        nav {
+            margin-top: 10px;
+        }
+
+        nav a {
+            color: white;
+            margin-right: 15px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #4a63e7;
+            color: white;
+            padding: 10px;
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        tr:hover {
+            background: #f1f3ff;
+        }
+
+        button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            margin: 2px;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        button:nth-child(1) { background: #4caf50; color: white; }
+        button:nth-child(2) { background: #ff9800; color: white; }
+        button:nth-child(3) { background: #2196f3; color: white; }
+
+        a {
+            text-decoration: none;
+            color: #4a63e7;
+            font-weight: bold;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* Modals */
+        #depositModal, #withdrawModal, #transferModal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+        }
+
+        #depositModal form,
+        #withdrawModal form,
+        #transferModal form {
+            background: white;
+            padding: 20px;
+            width: 320px;
+            margin: 10% auto;
+            border-radius: 10px;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 8px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        h2, h3 {
+            margin-top: 0;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #777;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h2>🏦 CredFlow</h2>
+    <nav>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/accounts">Accounts</a>
+        <a href="/transactions">Transactions</a>
+        <form th:action="@{/logout}" method="get" style="display:inline;">
+            <button type="submit">Sign Out</button>
+        </form>
+    </nav>
+</header>
+
+<div class="card">
+    <h2>My Accounts</h2>
+    <p>Overview of all your accounts</p>
+</div>
+
+<div th:if="${message}">
+    <p th:text="${message}"></p>
+</div>
+
+<div th:if="${error}">
+    <p th:text="${error}"></p>
+</div>
+
+<div class="card">
+    <table>
+        <thead>
+        <tr>
+            <th>Account Number</th>
+            <th>Account Holder</th>
+            <th>Balance</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="account : ${accounts}">
+            <td th:text="${account.accountNumber}"></td>
+            <td th:text="${account.accountHolderName}"></td>
+            <td>$<span th:text="${#numbers.formatDecimal(account.balance, 0, 2)}"></span></td>
+            <td>
+                <button onclick="openDepositModal(this.getAttribute('data-account-number'), this.getAttribute('data-account-holder'))"
+                        th:attr="data-account-number=${account.accountNumber},data-account-holder=${account.accountHolderName}">
+                    Deposit
+                </button>
+
+                <button onclick="openWithdrawModal(this.getAttribute('data-account-number'), this.getAttribute('data-account-holder'), this.getAttribute('data-balance'))"
+                        th:attr="data-account-number=${account.accountNumber},data-account-holder=${account.accountHolderName},data-balance=${account.balance}">
+                    Withdraw
+                </button>
+
+                <button onclick="openTransferModal(this.getAttribute('data-account-number'), this.getAttribute('data-account-holder'))"
+                        th:attr="data-account-number=${account.accountNumber},data-account-holder=${account.accountHolderName}">
+                    Transfer
+                </button>
+
+                <a th:href="@{'/transactions?accountNumber=' + ${account.accountNumber}}">
+                    Transactions
+                </a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<div th:if="${#lists.isEmpty(accounts)}">
+    <p>No Accounts Found</p>
+    <a href="/dashboard">Go to Dashboard</a>
+</div>
+
+<div th:if="${!#lists.isEmpty(accounts)}">
+    <h3>Account Summary</h3>
+    <p>Total Accounts: <span th:text="${#lists.size(accounts)}"></span></p>
+    <p>Total Balance: $
+        <span th:text="${#numbers.formatDecimal(#aggregates.sum(accounts.![balance]), 0, 2)}"></span>
+    </p>
+</div>
+
+<div>
+    <a href="/dashboard">Back to Dashboard</a> |
+    <a href="/transactions">View Transactions</a>
+</div>
+
+<hr>
+
+<!-- Modals -->
+<div id="depositModal">
+    <form id="depositForm" onsubmit="submitDeposit(event)">
+        <h3>Deposit</h3>
+        <p id="depositAccountInfo"></p>
+        <input type="number" id="depositAmount" required>
+        <button type="submit">Deposit</button>
+        <button type="button" onclick="closeDepositModal()">Cancel</button>
+    </form>
+</div>
+
+<div id="withdrawModal">
+    <form id="withdrawForm" onsubmit="submitWithdraw(event)">
+        <h3>Withdraw</h3>
+        <p id="withdrawAccountInfo"></p>
+        <p>Balance: $<span id="withdrawBalance"></span></p>
+        <input type="number" id="withdrawAmount" required>
+        <button type="submit">Withdraw</button>
+        <button type="button" onclick="closeWithdrawModal()">Cancel</button>
+    </form>
+</div>
+
+<div id="transferModal">
+    <form id="transferForm" onsubmit="submitTransfer(event)">
+        <h3>Transfer</h3>
+        <p id="transferAccountInfo"></p>
+
+        <input type="hidden" id="transferFromAccount">
+
+        <input type="text" id="toAccountNumber" placeholder="To Account" required>
+        <input type="number" id="transferAmount" required>
+        <input type="text" id="transferDescription" placeholder="Description">
+
+        <button type="submit" id="transferSubmitBtn">Transfer</button>
+        <button type="button" onclick="closeTransferModal()">Cancel</button>
+    </form>
+</div>
+
+<script>
+    let currentAccountNumber = '';
+
+    function openDepositModal(accountNumber, accountHolder) {
+        currentAccountNumber = accountNumber;
+        document.getElementById('depositAccountInfo').textContent = `${accountNumber} - ${accountHolder}`;
+        document.getElementById('depositModal').style.display = 'block';
+    }
+
+    function closeDepositModal() {
+        document.getElementById('depositModal').style.display = 'none';
+        document.getElementById('depositForm').reset();
+    }
+
+    function openWithdrawModal(accountNumber, accountHolder, balance) {
+        currentAccountNumber = accountNumber;
+        document.getElementById('withdrawAccountInfo').textContent = `${accountNumber} - ${accountHolder}`;
+        document.getElementById('withdrawBalance').textContent = parseFloat(balance).toFixed(2);
+        document.getElementById('withdrawModal').style.display = 'block';
+    }
+
+    function closeWithdrawModal() {
+        document.getElementById('withdrawModal').style.display = 'none';
+        document.getElementById('withdrawForm').reset();
+    }
+
+    function openTransferModal(accountNumber, accountHolder) {
+        currentAccountNumber = accountNumber;
+        document.getElementById('transferAccountInfo').textContent = `${accountNumber} - ${accountHolder}`;
+        document.getElementById('transferFromAccount').value = accountNumber;
+        document.getElementById('transferModal').style.display = 'block';
+    }
+
+    function closeTransferModal() {
+        document.getElementById('transferModal').style.display = 'none';
+        document.getElementById('transferForm').reset();
+    }
+
+    async function submitDeposit(event) {
+        event.preventDefault();
+        const amount = parseFloat(document.getElementById('depositAmount').value);
+
+        if (amount <= 0) return alert('Invalid amount');
+
+        const res = await fetch(`/deposit`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: `accountNumber=${currentAccountNumber}&amount=${amount}`
+        });
+
+        if (res.ok) location.reload();
+    }
+
+    async function submitWithdraw(event) {
+        event.preventDefault();
+        const amount = parseFloat(document.getElementById('withdrawAmount').value);
+        const max = parseFloat(document.getElementById('withdrawBalance').textContent);
+
+        if (amount > max) return alert('Insufficient funds');
+
+        const res = await fetch(`/withdraw`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: `accountNumber=${currentAccountNumber}&amount=${amount}`
+        });
+
+        if (res.ok) location.reload();
+    }
+
+    async function submitTransfer(event) {
+        event.preventDefault();
+
+        const from = document.getElementById('transferFromAccount').value;
+        const to = document.getElementById('toAccountNumber').value;
+        const amount = parseFloat(document.getElementById('transferAmount').value);
+        const desc = document.getElementById('transferDescription').value;
+
+        const res = await fetch('/transfer', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: `accountNumber=${from}&toAccountNumber=${to}&amount=${amount}&description=${encodeURIComponent(desc || '')}`
+        });
+
+        if (res.ok) location.reload();
+    }
+</script>
+
+</body>
+</html>

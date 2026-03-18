@@ -1,0 +1,268 @@
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>CredFlow - Transactions</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6fb;
+            margin: 0;
+            padding: 20px;
+        }
+
+        header {
+            background: #4a63e7;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        nav a {
+            color: white;
+            margin-right: 15px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #4a63e7;
+            color: white;
+            padding: 10px;
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        tr:hover {
+            background: #f1f3ff;
+        }
+
+        button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 2px;
+        }
+
+        select, input {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        a {
+            text-decoration: none;
+            color: #4a63e7;
+            font-weight: bold;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #777;
+        }
+
+        .credit-amount { color: #27ae60; font-weight: bold; }
+        .debit-amount { color: #e74c3c; font-weight: bold; }
+
+        .transaction-type.credit {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .transaction-type.debit {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h2>🏦 CredFlow</h2>
+    <nav>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/accounts">Accounts</a>
+        <a href="/transactions">Transactions</a>
+        <form th:action="@{/logout}" method="get" style="display:inline;">
+            <button type="submit">Sign Out</button>
+        </form>
+    </nav>
+</header>
+
+<div class="card">
+    <h2>Transaction History</h2>
+    <p>All your account activities</p>
+</div>
+
+<div th:if="${error}">
+    <p th:text="${error}"></p>
+</div>
+
+<!-- Filter -->
+<div class="card">
+    <h3>Filter Transactions</h3>
+
+    <select id="accountFilter" onchange="filterTransactions()">
+        <option value="">All Accounts</option>
+    </select>
+
+    <button onclick="refreshTransactions()">Refresh</button>
+
+    <div th:if="${selectedAccountNumber}">
+        <p>
+            Filtered: <span th:text="${selectedAccountNumber}"></span>
+            <a href="/transactions">Clear</a>
+        </p>
+    </div>
+</div>
+
+<!-- Summary -->
+<div class="card" th:if="${!#lists.isEmpty(transactions)}">
+    <h3>Summary</h3>
+
+    <p>Total Transactions: <span th:text="${#lists.size(transactions)}"></span></p>
+
+    <p>
+        Credits:
+        <span th:text="${#lists.size(transactions.?[type == 'DEPOSIT' or type == 'CREDIT'])}"></span>
+    </p>
+
+    <p>
+        Debits:
+        <span th:text="${#lists.size(transactions.?[type == 'WITHDRAWAL' or type == 'DEBIT'])}"></span>
+    </p>
+</div>
+
+<!-- Table -->
+<div class="card">
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Account</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Date</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="transaction : ${transactions}">
+            <td th:text="${transaction.id}"></td>
+            <td th:text="${transaction.accountNumber}"></td>
+
+            <td>
+                    <span class="transaction-type"
+                          th:text="${transaction.type}"
+                          th:classappend="${transaction.type == 'CREDIT' or transaction.type == 'DEPOSIT' ? 'credit' : 'debit'}">
+                    </span>
+            </td>
+
+            <td>
+                    <span th:class="${transaction.type == 'CREDIT' or transaction.type == 'DEPOSIT' ? 'credit-amount' : 'debit-amount'}">
+                        <span th:if="${transaction.type == 'CREDIT' or transaction.type == 'DEPOSIT'}">+</span>
+                        <span th:if="${transaction.type == 'DEBIT' or transaction.type == 'WITHDRAWAL'}">-</span>
+                        $<span th:text="${#numbers.formatDecimal(transaction.amount, 0, 2)}"></span>
+                    </span>
+            </td>
+
+            <td th:text="${transaction.timestamp}"></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div th:if="${#lists.isEmpty(transactions)}">
+        <p>No Transactions Found</p>
+        <a href="/accounts">Go to Accounts</a>
+    </div>
+</div>
+
+<div>
+    <a href="/accounts">Back to Accounts</a> |
+    <a href="/dashboard">Dashboard</a> |
+    <button onclick="window.print()">Print</button>
+</div>
+
+<hr>
+
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentAccountNumber = urlParams.get('accountNumber');
+
+    document.addEventListener('DOMContentLoaded', function() {
+        if (currentAccountNumber) {
+            const accountFilter = document.getElementById('accountFilter');
+
+            let option = document.createElement('option');
+            option.value = currentAccountNumber;
+            option.text = currentAccountNumber;
+            option.selected = true;
+            accountFilter.appendChild(option);
+        }
+
+        populateAccountFilter();
+    });
+
+    function populateAccountFilter() {
+        const accountFilter = document.getElementById('accountFilter');
+        const transactions = document.querySelectorAll('tbody tr');
+        const accountNumbers = new Set();
+
+        transactions.forEach(row => {
+            const accountCell = row.children[1];
+            if (accountCell) {
+                accountNumbers.add(accountCell.textContent.trim());
+            }
+        });
+
+        accountNumbers.forEach(acc => {
+            const option = document.createElement('option');
+            option.value = acc;
+            option.text = acc;
+            accountFilter.appendChild(option);
+        });
+    }
+
+    function filterTransactions() {
+        const selected = document.getElementById('accountFilter').value;
+
+        if (selected === '') {
+            window.location.href = '/transactions';
+        } else {
+            window.location.href = `/transactions?accountNumber=${selected}`;
+        }
+    }
+
+    function refreshTransactions() {
+        window.location.reload();
+    }
+</script>
+
+</body>
+</html>
